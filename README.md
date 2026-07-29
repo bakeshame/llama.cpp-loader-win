@@ -1,6 +1,7 @@
 # Llama.cpp Server Loader
 
 一个用于加载和配置 llama.cpp 服务器的 Windows 桌面应用程序，提供图形化界面来管理 llama.cpp 的各项参数。
+<img width="1507" height="990" alt="image" src="https://github.com/user-attachments/assets/ebedced3-bac9-4f79-b1bd-8ada25500639" />
 
 ## 功能特性
 

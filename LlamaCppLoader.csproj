@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>LlamaCppLoader</AssemblyName>
+    <Version>1.0.0</Version>
+    <Authors>LlamaCppLoader</Authors>
+    <Company>LlamaCppLoader</Company>
+    <Product>Llama.cpp Server Loader</Product>
+    <Description>A GUI application to load and configure llama.cpp server with various parameters</Description>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+</Project>

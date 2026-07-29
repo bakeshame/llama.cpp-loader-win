@@ -19,7 +19,7 @@ echo .NET SDK found!
 echo.
 
 echo Publishing as single-file application...
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=false
+dotnet publish -c Release
 if %errorlevel% neq 0 (
     echo ERROR: Publish failed
     pause

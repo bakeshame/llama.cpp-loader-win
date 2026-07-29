@@ -1,6 +1,38 @@
 # 版本历史
 
-## Version 1.2.0 (2026-07-29) - 参数优化和详细说明
+## Version 1.2.1 (2026-07-29) - UI 优化和单文件发布
+
+### ✨ 新功能
+- **真正的单文件发布**
+  - 从 148 MB + 7个DLL → 69 MB 单文件
+  - 启用 `IncludeNativeLibrariesForSelfExtract`
+  - 启用 `EnableCompressionInSingleFile`
+  - 无需额外 DLL，直接运行
+  - 文件：`LlamaCppLoader.csproj`
+
+### 🎨 界面改进
+- **优化按钮尺寸**
+  - Browse 按钮：统一 `MinWidth="90"`, `Padding="8,5"`
+  - Profile 管理按钮：`MinWidth="100-110"`, `Padding="8,5"`
+  - 版本刷新按钮：`MinWidth="90"`
+  - 底部控制按钮：统一 `Height="40"`, `FontSize="14"`
+  
+- **改进文字颜色**
+  - Start Server 按钮：白色文字 → 黑色文字
+  - Stop Server 按钮：白色文字 → 黑色文字
+  - 黑色文字在彩色背景上对比度更好
+
+### 🔧 技术改进
+- 更新项目版本号到 1.2.1
+- 简化 publish.bat 脚本
+- 配置持久化的单文件发布参数
+
+### 📦 分发
+- GitHub Release: https://github.com/bakeshame/llama.cpp-loader-win/releases/tag/v1.2.1
+- 单文件 exe: 69 MB
+- 支持 Windows 10/11 (x64)
+
+---
 
 ### ✨ 新功能
 - **全面的参数说明系统**

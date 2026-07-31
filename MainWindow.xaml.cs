@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Input;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -48,7 +49,7 @@ namespace LlamaCppLoader
             LoadDefaultSettings();
 
             // 设置 User-Agent
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("LlamaCppLoader/1.3.0");
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("LlamaCppLoader/1.4.0");
 
             // 异步检查版本
             _ = CheckVersionsAsync();
@@ -342,6 +343,7 @@ namespace LlamaCppLoader
 
                 StartButton.IsEnabled = false;
                 StopButton.IsEnabled = true;
+                TestButton.IsEnabled = true;
 
                 LogToConsole("Server started successfully!");
                 LogToConsole($"Server should be accessible at: http://localhost:{config.Port}");
@@ -374,6 +376,7 @@ namespace LlamaCppLoader
                     serverProcess = null;
                     StartButton.IsEnabled = true;
                     StopButton.IsEnabled = false;
+                    TestButton.IsEnabled = false;
                 }
             }
         }
@@ -869,6 +872,185 @@ namespace LlamaCppLoader
             ModelPathTextBox.Text = currentModelPath;
 
             LogToConsole($"已应用预设：{presetName}");
+        }
+
+        // ===== 快捷键支持 =====
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            // Ctrl+S: Save Profile
+            if (e.Key == Key.S && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                e.Handled = true;
+                SaveProfile_Click(this, new RoutedEventArgs());
+            }
+            // F5: Start Server
+            else if (e.Key == Key.F5 && Keyboard.Modifiers == ModifierKeys.None)
+            {
+                e.Handled = true;
+                if (StartButton.IsEnabled)
+                {
+                    StartServer_Click(this, new RoutedEventArgs());
+                }
+            }
+            // Ctrl+F5: Stop Server
+            else if (e.Key == Key.F5 && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                e.Handled = true;
+                if (StopButton.IsEnabled)
+                {
+                    StopServer_Click(this, new RoutedEventArgs());
+                }
+            }
+            // Ctrl+L: Clear Console
+            else if (e.Key == Key.L && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                e.Handled = true;
+                ClearOutput_Click(this, new RoutedEventArgs());
+            }
+        }
+
+        // ===== 配置导入/导出 =====
+        private void ExportProfile_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var config = GetCurrentConfig();
+                var dialog = new SaveFileDialog
+                {
+                    Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*",
+                    Title = "Export Configuration",
+                    FileName = $"llamacpp-config-{DateTime.Now:yyyyMMdd-HHmmss}.json"
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    var json = JsonConvert.SerializeObject(config, Formatting.Indented);
+                    File.WriteAllText(dialog.FileName, json);
+                    LogToConsole($"配置已导出到: {dialog.FileName}");
+                    MessageBox.Show($"配置已成功导出到:\n{dialog.FileName}", "导出成功",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogToConsole($"导出配置失败: {ex.Message}");
+                MessageBox.Show($"导出配置失败:\n{ex.Message}", "错误",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ImportProfile_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dialog = new OpenFileDialog
+                {
+                    Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*",
+                    Title = "Import Configuration"
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    var json = File.ReadAllText(dialog.FileName);
+                    var config = JsonConvert.DeserializeObject<ServerConfig>(json);
+
+                    if (config != null)
+                    {
+                        LoadProfileToUI(config);
+                        LogToConsole($"配置已从 {Path.GetFileName(dialog.FileName)} 导入");
+                        MessageBox.Show($"配置已成功导入！\n\n提示：使用 'Save Profile' 保存到配置列表中",
+                            "导入成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("无法解析配置文件", "错误",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogToConsole($"导入配置失败: {ex.Message}");
+                MessageBox.Show($"导入配置失败:\n{ex.Message}", "错误",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // ===== 测试连接 =====
+        private async void TestConnection_Click(object sender, RoutedEventArgs e)
+        {
+            var port = int.TryParse(PortTextBox.Text, out var p) ? p : 8080;
+            var testUrl = $"http://localhost:{port}/health";
+
+            LogToConsole($"正在测试连接: {testUrl}");
+            TestButton.IsEnabled = false;
+            TestButton.Content = "⏳ Testing...";
+
+            try
+            {
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                var response = await httpClient.GetAsync(testUrl);
+                sw.Stop();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    LogToConsole($"✓ 连接成功! 响应时间: {sw.ElapsedMilliseconds}ms");
+                    LogToConsole($"  状态码: {(int)response.StatusCode} {response.StatusCode}");
+
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrWhiteSpace(content) && content.Length < 500)
+                    {
+                        LogToConsole($"  响应: {content}");
+                    }
+
+                    MessageBox.Show(
+                        $"✓ 服务器连接成功!\n\n" +
+                        $"端口: {port}\n" +
+                        $"响应时间: {sw.ElapsedMilliseconds}ms\n" +
+                        $"状态: {response.StatusCode}",
+                        "测试成功",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+                else
+                {
+                    LogToConsole($"✗ 服务器响应异常: {(int)response.StatusCode} {response.StatusCode}");
+                    MessageBox.Show(
+                        $"服务器响应异常\n\n状态码: {(int)response.StatusCode} {response.StatusCode}",
+                        "测试失败",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                LogToConsole($"✗ 连接失败: {ex.Message}");
+                MessageBox.Show(
+                    $"无法连接到服务器\n\n" +
+                    $"端口: {port}\n" +
+                    $"错误: {ex.Message}\n\n" +
+                    $"请确认：\n" +
+                    $"1. 服务器已启动\n" +
+                    $"2. 端口号正确\n" +
+                    $"3. 防火墙未阻止",
+                    "连接失败",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+            catch (TaskCanceledException)
+            {
+                LogToConsole("✗ 连接超时（10秒）");
+                MessageBox.Show(
+                    "连接超时\n\n服务器可能正在启动中或未响应",
+                    "超时",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+            finally
+            {
+                TestButton.IsEnabled = true;
+                TestButton.Content = "🧪 Test Connection";
+            }
         }
     }
 }

@@ -1,9 +1,16 @@
 <Window x:Class="LlamaCppLoader.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Llama.cpp Server Loader" Height="800" Width="900"
+        Title="Llama.cpp Server Loader" Height="800" Width="1000"
         WindowStartupLocation="CenterScreen"
-        Background="#F5F5F5">
+        Background="#F5F5F5"
+        KeyDown="Window_KeyDown">
+    <Window.InputBindings>
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveProfileCommand}"/>
+        <KeyBinding Key="F5" Command="{Binding StartServerCommand}"/>
+        <KeyBinding Key="F5" Modifiers="Ctrl" Command="{Binding StopServerCommand}"/>
+        <KeyBinding Key="L" Modifiers="Ctrl" Command="{Binding ClearConsoleCommand}"/>
+    </Window.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -312,10 +319,17 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <ComboBox x:Name="ProfileComboBox" Grid.Column="0" Margin="5" SelectionChanged="ProfileComboBox_SelectionChanged"/>
-                        <Button Content="Save Profile" Grid.Column="1" Click="SaveProfile_Click" Padding="8,5" Margin="5" MinWidth="100"/>
+                        <Button Content="Save Profile" Grid.Column="1" Click="SaveProfile_Click" Padding="8,5" Margin="5" MinWidth="100"
+                                ToolTip="保存当前配置 (Ctrl+S)"/>
                         <Button Content="Delete Profile" Grid.Column="2" Click="DeleteProfile_Click" Padding="8,5" Margin="5" MinWidth="110"/>
+                        <Button Content="📤 Export" Grid.Column="3" Click="ExportProfile_Click" Padding="8,5" Margin="5" MinWidth="90"
+                                ToolTip="导出当前配置到文件"/>
+                        <Button Content="📥 Import" Grid.Column="4" Click="ImportProfile_Click" Padding="8,5" Margin="5" MinWidth="90"
+                                ToolTip="从文件导入配置"/>
                     </Grid>
                 </GroupBox>
             </StackPanel>
@@ -342,11 +356,13 @@
 
         <!-- Control Buttons -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
-            <Button x:Name="StartButton" Content="Start Server" Click="StartServer_Click"
-                    Background="#4CAF50" Foreground="Black" FontWeight="Bold" Width="150" Height="40" Margin="5" FontSize="14"/>
-            <Button x:Name="StopButton" Content="Stop Server" Click="StopServer_Click"
-                    Background="#F44336" Foreground="Black" FontWeight="Bold" Width="150" Height="40" Margin="5" FontSize="14" IsEnabled="False"/>
-            <Button Content="Clear Output" Click="ClearOutput_Click" Width="150" Height="40" Margin="5" Padding="8,5" FontSize="14"/>
+            <Button x:Name="StartButton" Content="▶ Start Server (F5)" Click="StartServer_Click"
+                    Background="#4CAF50" Foreground="Black" FontWeight="Bold" Width="170" Height="40" Margin="5" FontSize="14"/>
+            <Button x:Name="StopButton" Content="⏹ Stop Server (Ctrl+F5)" Click="StopServer_Click"
+                    Background="#F44336" Foreground="Black" FontWeight="Bold" Width="190" Height="40" Margin="5" FontSize="14" IsEnabled="False"/>
+            <Button x:Name="TestButton" Content="🧪 Test Connection" Click="TestConnection_Click"
+                    Background="#2196F3" Foreground="White" FontWeight="Bold" Width="160" Height="40" Margin="5" FontSize="14" IsEnabled="False"/>
+            <Button Content="🗑 Clear (Ctrl+L)" Click="ClearOutput_Click" Width="160" Height="40" Margin="5" Padding="8,5" FontSize="14"/>
         </StackPanel>
     </Grid>
 </Window>

@@ -5,7 +5,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <AssemblyName>LlamaCppLoader</AssemblyName>
-    <Version>1.2.1</Version>
+    <Version>1.3.0</Version>
     <Authors>LlamaCppLoader</Authors>
     <Company>LlamaCppLoader</Company>
     <Product>Llama.cpp Server Loader</Product>

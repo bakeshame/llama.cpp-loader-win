@@ -51,7 +51,10 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="ServerPathTextBox" Grid.Column="0"
-                                     ToolTip="选择 llama-server.exe 文件。程序会自动检测版本号。"/>
+                                     ToolTip="选择 llama-server.exe 文件。程序会自动检测版本号。&#x0a;💡 提示：可以直接拖放文件到此处"
+                                     AllowDrop="True"
+                                     PreviewDragOver="ServerPath_PreviewDragOver"
+                                     Drop="ServerPath_Drop"/>
                             <Button Content="Browse..." Grid.Column="1" Click="BrowseServerPath_Click"
                                     ToolTip="浏览选择 llama-server.exe" Padding="8,5" Margin="5,0,0,5" MinWidth="90"/>
                         </Grid>
@@ -64,7 +67,10 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="ModelPathTextBox" Grid.Column="0"
-                                     ToolTip="选择 .gguf 模型文件。量化级别：Q4_K_M=快速省显存, Q5_K_M=平衡, Q6_K=高质量, Q8_0=接近原始"/>
+                                     ToolTip="选择 .gguf 模型文件。量化级别：Q4_K_M=快速省显存, Q5_K_M=平衡, Q6_K=高质量, Q8_0=接近原始&#x0a;💡 提示：可以直接拖放文件到此处"
+                                     AllowDrop="True"
+                                     PreviewDragOver="ModelPath_PreviewDragOver"
+                                     Drop="ModelPath_Drop"/>
                             <Button Content="Browse..." Grid.Column="1" Click="BrowseModelPath_Click"
                                     ToolTip="浏览选择 .gguf 模型文件" Padding="8,5" Margin="5,0,0,5" MinWidth="90"/>
                         </Grid>
@@ -268,6 +274,30 @@
                                      ToolTipService.InitialShowDelay="100"/>
                         </StackPanel>
                     </Grid>
+                </GroupBox>
+
+                <!-- Parameter Presets -->
+                <GroupBox Header="参数预设 (Parameter Presets)">
+                    <GroupBox.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" FontWeight="Bold"/>
+                        </DataTemplate>
+                    </GroupBox.HeaderTemplate>
+                    <StackPanel>
+                        <TextBlock Text="快速应用推荐配置（不会改变服务器和模型路径）：" Margin="5,5,5,10" Foreground="#666"/>
+                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button Content="🎯 CTF/代码审计" Click="ApplyPreset_CTF" Padding="10,5" Margin="5" MinWidth="120"
+                                    ToolTip="Context: 65536, Temp: 0.40, Repeat Penalty: 1.08&#x0a;适合长上下文分析和代码审计"/>
+                            <Button Content="💬 普通对话" Click="ApplyPreset_Conversation" Padding="10,5" Margin="5" MinWidth="120"
+                                    ToolTip="Context: 32768, Temp: 0.70, Top P: 0.95&#x0a;适合日常聊天对话"/>
+                            <Button Content="💻 代码生成" Click="ApplyPreset_CodeGen" Padding="10,5" Margin="5" MinWidth="120"
+                                    ToolTip="Context: 32768, Temp: 0.20, Top P: 0.85&#x0a;适合精确的代码生成任务"/>
+                            <Button Content="✍️ 创意写作" Click="ApplyPreset_Creative" Padding="10,5" Margin="5" MinWidth="120"
+                                    ToolTip="Context: 32768, Temp: 0.90, Repeat Penalty: 1.15&#x0a;适合小说、诗歌等创意内容"/>
+                            <Button Content="📚 大上下文" Click="ApplyPreset_LargeContext" Padding="10,5" Margin="5" MinWidth="120"
+                                    ToolTip="Context: 131072, Cache: q4_0&#x0a;适合超长文档分析（需要更多显存）"/>
+                        </WrapPanel>
+                    </StackPanel>
                 </GroupBox>
 
                 <!-- Profile Management -->

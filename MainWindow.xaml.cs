@@ -20,7 +20,9 @@ namespace LlamaCppLoader
         private Process? serverProcess;
         private readonly string configDirectory;
         private readonly string profilesFile;
+        private readonly string recentPathsFile;
         private Dictionary<string, ServerConfig> profiles = new();
+        private RecentPaths recentPaths = new();
         private static readonly HttpClient httpClient = new HttpClient
         {
             Timeout = TimeSpan.FromSeconds(10)
@@ -38,13 +40,15 @@ namespace LlamaCppLoader
                 "LlamaCppLoader"
             );
             profilesFile = Path.Combine(configDirectory, "profiles.json");
+            recentPathsFile = Path.Combine(configDirectory, "recent.json");
 
             Directory.CreateDirectory(configDirectory);
+            LoadRecentPaths();
             LoadProfiles();
             LoadDefaultSettings();
 
             // 设置 User-Agent
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("LlamaCppLoader/1.0");
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("LlamaCppLoader/1.3.0");
 
             // 异步检查版本
             _ = CheckVersionsAsync();
@@ -125,6 +129,7 @@ namespace LlamaCppLoader
             if (dialog.ShowDialog() == true)
             {
                 ServerPathTextBox.Text = dialog.FileName;
+                AddToRecentServerPath(dialog.FileName);
                 // 重新检测版本
                 _ = CheckVersionsAsync();
             }
@@ -141,6 +146,7 @@ namespace LlamaCppLoader
             if (dialog.ShowDialog() == true)
             {
                 ModelPathTextBox.Text = dialog.FileName;
+                AddToRecentModelPath(dialog.FileName);
             }
         }
 
@@ -678,6 +684,191 @@ namespace LlamaCppLoader
             {
                 MessageBox.Show("GitHub Release 页面地址不可用", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
             }
+        }
+
+        // ===== 最近使用路径功能 =====
+        private void LoadRecentPaths()
+        {
+            if (File.Exists(recentPathsFile))
+            {
+                try
+                {
+                    var json = File.ReadAllText(recentPathsFile);
+                    recentPaths = JsonConvert.DeserializeObject<RecentPaths>(json) ?? new RecentPaths();
+                }
+                catch (Exception ex)
+                {
+                    LogToConsole($"Error loading recent paths: {ex.Message}");
+                    recentPaths = new RecentPaths();
+                }
+            }
+        }
+
+        private void SaveRecentPaths()
+        {
+            try
+            {
+                var json = JsonConvert.SerializeObject(recentPaths, Formatting.Indented);
+                File.WriteAllText(recentPathsFile, json);
+            }
+            catch (Exception ex)
+            {
+                LogToConsole($"Error saving recent paths: {ex.Message}");
+            }
+        }
+
+        private void AddToRecentServerPath(string path)
+        {
+            if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+            {
+                recentPaths.AddServerPath(path);
+                SaveRecentPaths();
+            }
+        }
+
+        private void AddToRecentModelPath(string path)
+        {
+            if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+            {
+                recentPaths.AddModelPath(path);
+                SaveRecentPaths();
+            }
+        }
+
+        // ===== 拖放功能 =====
+        private void ServerPath_PreviewDragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files != null && files.Length > 0)
+                {
+                    var file = files[0];
+                    e.Effects = file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+                        ? DragDropEffects.Copy
+                        : DragDropEffects.None;
+                }
+                else
+                {
+                    e.Effects = DragDropEffects.None;
+                }
+            }
+            else
+            {
+                e.Effects = DragDropEffects.None;
+            }
+            e.Handled = true;
+        }
+
+        private void ServerPath_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files != null && files.Length > 0)
+                {
+                    var file = files[0];
+                    if (file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ServerPathTextBox.Text = file;
+                        AddToRecentServerPath(file);
+                        _ = CheckVersionsAsync();
+                        LogToConsole($"Server path set to: {file}");
+                    }
+                    else
+                    {
+                        MessageBox.Show("请拖放 .exe 文件", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                }
+            }
+        }
+
+        private void ModelPath_PreviewDragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files != null && files.Length > 0)
+                {
+                    var file = files[0];
+                    e.Effects = file.EndsWith(".gguf", StringComparison.OrdinalIgnoreCase)
+                        ? DragDropEffects.Copy
+                        : DragDropEffects.None;
+                }
+                else
+                {
+                    e.Effects = DragDropEffects.None;
+                }
+            }
+            else
+            {
+                e.Effects = DragDropEffects.None;
+            }
+            e.Handled = true;
+        }
+
+        private void ModelPath_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files != null && files.Length > 0)
+                {
+                    var file = files[0];
+                    if (file.EndsWith(".gguf", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ModelPathTextBox.Text = file;
+                        AddToRecentModelPath(file);
+                        LogToConsole($"Model path set to: {file}");
+                    }
+                    else
+                    {
+                        MessageBox.Show("请拖放 .gguf 文件", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                }
+            }
+        }
+
+        // ===== 参数预设功能 =====
+        private void ApplyPreset_CTF(object sender, RoutedEventArgs e)
+        {
+            ApplyPreset(ConfigPresets.GetCTFPreset(), "CTF/代码审计");
+        }
+
+        private void ApplyPreset_Conversation(object sender, RoutedEventArgs e)
+        {
+            ApplyPreset(ConfigPresets.GetConversationPreset(), "普通对话");
+        }
+
+        private void ApplyPreset_CodeGen(object sender, RoutedEventArgs e)
+        {
+            ApplyPreset(ConfigPresets.GetCodeGenerationPreset(), "代码生成");
+        }
+
+        private void ApplyPreset_Creative(object sender, RoutedEventArgs e)
+        {
+            ApplyPreset(ConfigPresets.GetCreativeWritingPreset(), "创意写作");
+        }
+
+        private void ApplyPreset_LargeContext(object sender, RoutedEventArgs e)
+        {
+            ApplyPreset(ConfigPresets.GetLargeContextPreset(), "大上下文");
+        }
+
+        private void ApplyPreset(ServerConfig preset, string presetName)
+        {
+            // 保存当前的服务器和模型路径
+            var currentServerPath = ServerPathTextBox.Text;
+            var currentModelPath = ModelPathTextBox.Text;
+
+            // 应用预设
+            LoadProfileToUI(preset);
+
+            // 恢复服务器和模型路径
+            ServerPathTextBox.Text = currentServerPath;
+            ModelPathTextBox.Text = currentModelPath;
+
+            LogToConsole($"已应用预设：{presetName}");
         }
     }
 }

@@ -224,7 +224,8 @@ namespace LlamaCppLoader
                 Parallel = int.TryParse(ParallelTextBox.Text, out var parallel) ? parallel : 1,
                 ReasoningPreserve = ReasoningPreserveCheckBox.IsChecked == true,
                 ApiKeyEnabled = ApiKeyEnabledCheckBox.IsChecked == true,
-                ApiKey = ApiKeyTextBox.Text
+                ApiKey = ApiKeyTextBox.Text,
+                NGpuLayers = int.TryParse(NGpuLayersTextBox.Text, out var ngl) ? ngl : 999
             };
         }
 
@@ -257,6 +258,7 @@ namespace LlamaCppLoader
             ApiKeyEnabledCheckBox.IsChecked = config.ApiKeyEnabled;
             ApiKeyTextBox.Text = config.ApiKey;
             ApiKeyTextBox.IsEnabled = config.ApiKeyEnabled;
+            NGpuLayersTextBox.Text = config.NGpuLayers.ToString();
         }
 
         private void SelectComboBoxItem(ComboBox comboBox, string value)
@@ -394,6 +396,7 @@ namespace LlamaCppLoader
             args.Append($"--ctx-size {config.CtxSize} ");
             args.Append($"--batch-size {config.BatchSize} ");
             args.Append($"--ubatch-size {config.UBatchSize} ");
+            args.Append($"--n-gpu-layers {config.NGpuLayers} ");
 
             // 新增：并发槽位
             if (config.Parallel > 0)

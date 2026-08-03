@@ -39,5 +39,6 @@ namespace LlamaCppLoader
         public bool ReasoningPreserve { get; set; } = true;
         public bool ApiKeyEnabled { get; set; } = false;
         public string ApiKey { get; set; } = string.Empty;
+        public int NGpuLayers { get; set; } = 999;
     }
 }
